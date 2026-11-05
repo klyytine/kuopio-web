@@ -47,17 +47,16 @@ async function openPage({ width = 1280, colorScheme = 'light', routes = {} } = {
   const errors = [];
   page.on('request', (r) => requests.push(r.url()));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-  await context.route(/facebook\.(com|net)/, (r) => r.abort());
   for (const [pattern, handler] of Object.entries(routes)) await page.route(new RegExp(pattern), handler);
   await page.goto(base);
   await page.waitForSelector('#h-events'); // the list cards are rendered together after all data loads
   return { context, page, requests, errors };
 }
 
-test('shows six Finnish cards in order', async () => {
+test('shows three Finnish cards in order', async () => {
   const { context, page } = await openPage();
   const headings = await page.locator('h2').allTextContents();
-  assert.deepEqual(headings, ['Kuulutukset', 'Uutiset', 'Tapahtumat', 'Facebook', 'Instagram', 'LinkedIn']);
+  assert.deepEqual(headings, ['Kuulutukset', 'Uutiset', 'Tapahtumat']);
   assert.equal(await page.getAttribute('html', 'lang'), 'fi');
   await context.close();
 });
@@ -144,23 +143,23 @@ test('a failed source shows the fallback and does not affect others', async () =
   await context.close();
 });
 
-test('facebook is not contacted before the click', async () => {
+test('every card has Facebook, Instagram and LinkedIn icon links and loads nothing from them', async () => {
   const { context, page, requests } = await openPage();
-  assert.equal(requests.filter((u) => /facebook/.test(u)).length, 0);
+  assert.equal(await page.locator('section.card').count(), 3);
+  for (const card of await page.locator('section.card').all()) {
+    const links = card.locator('.social-links a');
+    assert.deepEqual(await links.evaluateAll((as) => as.map((a) => a.href)), [
+      'https://www.facebook.com/kuopionkaupunki/',
+      'https://www.instagram.com/kuopionkaupunki/',
+      'https://fi.linkedin.com/company/city-of-kuopio',
+    ]);
+    assert.deepEqual(await links.evaluateAll((as) => as.map((a) => a.getAttribute('aria-label'))), [
+      'Kuopion kaupunki Facebookissa', 'Kuopion kaupunki Instagramissa', 'City of Kuopio LinkedInissä',
+    ]);
+    assert.equal(await card.locator('.social-links svg').count(), 3);
+  }
+  assert.equal(requests.filter((u) => /facebook|instagram|linkedin/.test(u)).length, 0);
   assert.equal(await page.locator('iframe').count(), 0);
-  await page.click('#fb-load');
-  const src = await page.locator('iframe.fb-frame').getAttribute('src');
-  assert.match(src, /^https:\/\/www\.facebook\.com\/plugins\/page\.php\?/);
-  assert.ok(src.includes('tabs=timeline'));
-  assert.ok(src.includes('locale=fi_FI'));
-  await context.close();
-});
-
-test('instagram and linkedin are plain links', async () => {
-  const { context, page } = await openPage();
-  const hrefs = await page.locator('a.profile-link').evaluateAll((as) => as.map((a) => a.href));
-  assert.ok(hrefs.includes('https://www.instagram.com/kuopionkaupunki/'));
-  assert.ok(hrefs.includes('https://fi.linkedin.com/company/city-of-kuopio'));
   await context.close();
 });
 
@@ -173,7 +172,7 @@ test('footer carries the unofficial disclaimer', async () => {
 
 test('no console errors and no horizontal scroll on a phone', async () => {
   const { context, page, errors } = await openPage({ width: 390 });
-  assert.deepEqual(errors.filter((e) => !/facebook|ERR_FAILED/i.test(e)), []);
+  assert.deepEqual(errors.filter((e) => !/ERR_FAILED/i.test(e)), []);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(overflow <= 0, `horizontal overflow of ${overflow}px`);
   await context.close();

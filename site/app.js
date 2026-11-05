@@ -4,7 +4,6 @@ const SOURCES = [
   { id: 'events', title: 'Tapahtumat', sourceUrl: 'https://www.hellokuopio.fi/tapahtumat/tapahtumakalenteri/' },
 ];
 const COLLAPSED = 5;
-const FACEBOOK_PAGE = 'https://www.facebook.com/kuopionkaupunki/';
 
 function el(tag, opts = {}, kids = []) {
   const node = document.createElement(tag);
@@ -97,6 +96,7 @@ function buildCard(cfg, data) {
       el('p', { cls: 'updated', text: `Päivitetty ${formatStamp(data.updated)}` }),
     ]));
   }
+  section.append(document.getElementById('social-links').content.cloneNode(true));
   return el('div', { cls: 'column is-12-mobile is-6-tablet is-4-desktop' }, [section]);
 }
 
@@ -110,33 +110,10 @@ async function load(cfg) {
   }
 }
 
-function wireFacebook() {
-  const button = document.getElementById('fb-load');
-  if (!button) return;
-  button.addEventListener('click', () => {
-    const params = new URLSearchParams({
-      href: FACEBOOK_PAGE, tabs: 'timeline', width: '500', height: '600',
-      small_header: 'true', adapt_container_width: 'true', hide_cover: 'true',
-      show_facepile: 'false', locale: 'fi_FI',
-    });
-    const frame = el('iframe', {
-      cls: 'fb-frame',
-      attrs: {
-        src: `https://www.facebook.com/plugins/page.php?${params}`,
-        title: 'Kuopion kaupungin Facebook-syöte',
-        loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade',
-      },
-    });
-    document.getElementById('fb-slot').replaceChildren(frame);
-  });
-}
-
 async function main() {
   const grid = document.getElementById('cards');
-  const social = document.getElementById('social-facebook');
   const results = await Promise.all(SOURCES.map(load));
-  SOURCES.forEach((cfg, index) => grid.insertBefore(buildCard(cfg, results[index]), social));
-  wireFacebook();
+  SOURCES.forEach((cfg, index) => grid.append(buildCard(cfg, results[index])));
 }
 
 main();

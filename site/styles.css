@@ -40,8 +40,8 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--link); outline-
 button.expand { margin-top: 0.75rem; background: transparent; color: var(--link); border: 1px solid var(--link); cursor: pointer; }
 .card-footer { border-top: 1px solid var(--border); background: transparent; }
 .updated { color: var(--muted); font-size: 0.8rem; padding: 0.6rem 0.75rem; margin: 0; }
-.profile-link { display: block; padding: 0.6rem 0; font-weight: 600; }
-.fb-frame { width: 100%; max-width: 500px; height: 600px; border: 0; }
-button#fb-load { background: transparent; color: var(--link); border: 1px solid var(--link); cursor: pointer; }
+.social-links { display: flex; gap: 0.25rem; padding: 0.25rem 0.5rem; border-top: 1px solid var(--border); }
+.social-links a { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; color: var(--link); }
+.social-links a:hover { background: color-mix(in srgb, var(--link) 12%, transparent); }
 .site-footer { padding: 1.5rem 0 2rem; color: var(--muted); font-size: 0.9rem; }
 .site-footer a { color: var(--link); }

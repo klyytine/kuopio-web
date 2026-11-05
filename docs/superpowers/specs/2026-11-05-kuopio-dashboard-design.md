@@ -10,7 +10,7 @@ A Finnish-language bulletin board of City of Kuopio information, hosted on GitHu
 
 Success criteria:
 
-1. The page opens at the GitHub Pages URL and shows six cards in two rows of three: Kuulutukset, Uutiset, Tapahtumat, then Facebook, Instagram, LinkedIn (amended 2026-11-05 after the first demo; the card formerly named Ilmoitustaulu is now Kuulutukset).
+1. The page opens at the GitHub Pages URL and shows three cards: Kuulutukset, Uutiset, Tapahtumat. Each card ends with icon links to the City of Kuopio on Facebook, Instagram and LinkedIn (amended 2026-11-05 after the first demo; the card formerly named Ilmoitustaulu is now Kuulutukset; the separate social cards were dropped because none of the three networks offers a free, open feed).
 2. Each list card shows up to 5 items and expands to all available items, maximum 10. The button shows the real count.
 3. Each card has a link to the page its data comes from.
 4. Reloading the browser shows the latest deployed data. Data is refreshed on GitHub every 30 minutes.
@@ -105,17 +105,14 @@ Rules:
 
 ## 6. Frontend
 
-1. Layout: Bulma columns. Three per row on desktop, two on tablet, one on phone. Order: Kuulutukset, Uutiset, Tapahtumat, Facebook, Instagram, LinkedIn. On desktop that is two rows of three; each social feed is its own card below the three list cards.
+1. Layout: Bulma columns. Three per row on desktop, two on tablet, one on phone. Order: Kuulutukset, Uutiset, Tapahtumat.
 2. List card: header with title and "Avaa lähde" link. Five items, each a link with date, and venue for events. Button "Näytä lisää (N)" toggles items 6 to N. N is the real count. If there are 5 or fewer items, no button. Button uses `aria-expanded`. State resets on reload. Footer shows "Päivitetty 5.11.2026 klo 14.30".
 3. Stale card: shows "Tiedot voivat olla vanhentuneita, viimeksi päivitetty …".
 4. Empty card: shows "Tietoja ei saatu haettua" with the source link.
-5. Social cards, static (one card each for Facebook, Instagram and LinkedIn):
-   - Facebook: a button "Näytä Facebook-syöte". Only on click does the page load the Facebook Page plugin timeline as an iframe (no Facebook script) for the City of Kuopio page. No Facebook script loads before the click. The page URL is a configuration constant to be confirmed with the user.
-   - Instagram and LinkedIn: link tiles to the profiles. Profile URLs are configuration constants to be confirmed with the user.
-   - If the Facebook embed fails or is blocked, the tile shows a link to the page.
+5. Social links: each card ends with three icon links (Facebook, Instagram, LinkedIn) to the City of Kuopio profiles. Icons are inline SVG with `currentColor`, each link has a Finnish `aria-label` and a 44 px target. The page loads no script, iframe, image or font from the networks; the links only navigate. Profile URLs are configuration constants in `site/index.html`.
 6. Theme: Bulma plus a custom stylesheet of about 100 lines. Colors are CSS variables. Palette values come from the stylesheet at `https://www.kuopio.fi/app/themes/kuopio/assets/dist/main.css`, read at build time of the theme, not guessed. Light and dark mode through `prefers-color-scheme`. No city logo.
 7. Accessibility: visible focus, keyboard operation, contrast WCAG 2.2 AA, semantic headings.
-8. Safety: all source text is inserted with `textContent`. No `innerHTML` with source data. Content Security Policy meta tag restricting scripts to self, and allowing `frame-src https://www.facebook.com`.
+8. Safety: all source text is inserted with `textContent`. No `innerHTML` with source data. Content Security Policy meta tag restricting scripts to self, with `frame-src 'none'`.
 9. Footer: "Epävirallinen palvelu. Tiedot haetaan Kuopion kaupungin julkisilta sivuilta." with links to the sources.
 
 ## 7. Error handling
@@ -162,7 +159,7 @@ README.md          (Finnish and English, short)
 1. **Parser tests** (Node test runner, saved fixtures from section 2): item count, field presence, ISO dates, `ä` and `ö` decoding in Cloudos titles, newest-first ordering, URL host allow-list.
 2. **Failure tests:** empty body, malformed XML, HTTP 500, timeout, changed table layout. Each must leave the previous file in place with `stale: true` and `failures` incremented.
 3. **Merge tests:** previous file present, absent, and corrupt.
-4. **Frontend tests** (Playwright, local static server, sample JSON): 5 items shown, button reveals the rest, real count in button, no button for 5 or fewer items, stale and empty states, no console errors, Facebook script absent before the click, keyboard operation.
+4. **Frontend tests** (Playwright, local static server, sample JSON): 5 items shown, button reveals the rest, real count in button, no button for 5 or fewer items, stale and empty states, no console errors, social icon links present on every card with no request to the networks, keyboard operation.
 5. **Visual check:** screenshots at 390 px and 1280 px widths, reviewed by me.
 6. **Live run:** one real run of all fetchers, output inspected before the schedule is enabled.
 
@@ -195,9 +192,9 @@ Checklist:
 | 8 | No HTML injection | Put `<img src=x onerror=alert(1)>` in a fixture title, load page | rendered as text, no alert |
 | 9 | Expand behavior | Playwright run or manual | 5 shown, expand shows real count up to 10 |
 | 10 | Source links | Click or curl each "Avaa lähde" link | HTTP 200 and the intended page |
-| 11 | Facebook consent gate | Browser network panel before click | no request to facebook.com or facebook.net |
-| 12 | Facebook embed result | Click the button in a real browser | record what appears, including failures |
-| 13 | Instagram and LinkedIn tiles | Open both links | correct City of Kuopio profiles |
+| 11 | No third-party requests | Browser network panel on load | no request to facebook, instagram or linkedin hosts |
+| 12 | Social icon links | Open the three icons on one card in a real browser | correct City of Kuopio profiles |
+| 13 | Icon links on every card | Check all three cards | each card has the same three icons |
 | 14 | Mobile and desktop layout | Screenshots at 390 and 1280 px | no horizontal scroll, text readable |
 | 15 | Accessibility | Keyboard-only walk, contrast check, axe or Lighthouse if available | no critical issues, tool and version noted |
 | 16 | Language | Read all visible strings | Finnish, no English left, no typos |
@@ -229,7 +226,7 @@ Items 12, 19, 20 and 21 depend on live conditions or human judgment. If the audi
 | Risk | Effect | Mitigation |
 |---|---|---|
 | Cloudos HTML changes | Notice card goes stale | Output validation, stale label, failure alert after 3 runs |
-| Facebook Page plugin retired or blocked | Social card shows only links | Click-to-load, link fallback, audit item 12 |
+| Profile URL changes | Icon link opens a wrong or missing page | Audit item 12, URLs kept in one template |
 | Source terms disallow automated access | Legal or reputation risk | Audit item 21, low request rate, user decides |
 | Scheduled runs delayed or disabled by GitHub after 60 days of repo inactivity | Stale data | Timestamps on cards. Push or manual run re-enables. The 60-day rule is from memory, not verified here. |
 | Site resembles official city site | Confusion | Disclaimer, no logo |

@@ -37,9 +37,9 @@ Checklist:
 | 8 | No HTML injection | Put `<img src=x onerror=alert(1)>` in a fixture title, load page | rendered as text, no alert |
 | 9 | Expand behavior | Playwright run or manual | 5 shown, expand shows real count up to 10 |
 | 10 | Source links | Click or curl each "Avaa lähde" link | HTTP 200 and the intended page |
-| 11 | Facebook consent gate | Browser network panel before click | no request to facebook.com or facebook.net |
-| 12 | Facebook embed result | Click the button in a real browser | record what appears, including failures |
-| 13 | Instagram and LinkedIn tiles | Open both links | correct City of Kuopio profiles |
+| 11 | No third-party requests | Browser network panel on load | no request to facebook, instagram or linkedin hosts |
+| 12 | Social icon links | Open the three icons on one card in a real browser | correct City of Kuopio profiles |
+| 13 | Icon links on every card | Check all three cards | each card has the same three icons |
 | 14 | Mobile and desktop layout | Screenshots at 390 and 1280 px | no horizontal scroll, text readable |
 | 15 | Accessibility | Keyboard-only walk, contrast check, axe or Lighthouse if available | no critical issues, tool and version noted |
 | 16 | Language | Read all visible strings | Finnish, no English left, no typos |
