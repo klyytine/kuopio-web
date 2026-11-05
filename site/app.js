@@ -4,6 +4,7 @@ const SOURCES = [
   { id: 'events', title: 'Tapahtumat', sourceUrl: 'https://www.hellokuopio.fi/tapahtumat/tapahtumakalenteri/' },
 ];
 const COLLAPSED = 5;
+const DATA_BASE = document.documentElement.dataset.dataBase || 'data/';
 
 function el(tag, opts = {}, kids = []) {
   const node = document.createElement(tag);
@@ -102,7 +103,7 @@ function buildCard(cfg, data) {
 
 async function load(cfg) {
   try {
-    const res = await fetch(`data/${cfg.id}.json`, { cache: 'no-store' });
+    const res = await fetch(`${DATA_BASE}${cfg.id}.json`, { cache: 'no-store' });
     if (!res.ok) throw new Error(String(res.status));
     return await res.json();
   } catch {
