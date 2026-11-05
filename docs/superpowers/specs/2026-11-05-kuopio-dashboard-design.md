@@ -18,7 +18,9 @@ Success criteria:
 6. All visible text is Finnish. `<html lang="fi">`.
 7. The footer states the service is unofficial.
 
-Non-goals: user accounts, search, notifications, history of past data, a backend, scraping Facebook, Instagram or LinkedIn.
+Non-goals for v1: user accounts, search, email notifications, history of past data, favorites, a backend, scraping Facebook, Instagram or LinkedIn.
+
+The deferred features (accounts, search, email notifications, history, favorites) are designed for but not built. The architecture keeps the seams listed in the plan section "Future upgrades": stable item ids, a data schema version, a new-items hook in the build, and no personal data in v1. Added 2026-11-05 at the user's request.
 
 ## 2. Verified source facts
 
@@ -66,6 +68,7 @@ Common JSON shape per source, written to `site/data/<id>.json`:
 
 ```json
 {
+  "schema": 1,
   "id": "news",
   "title": "Uutiset",
   "sourceUrl": "https://www.kuopio.fi/uutisarkisto/",
@@ -73,12 +76,12 @@ Common JSON shape per source, written to `site/data/<id>.json`:
   "stale": false,
   "failures": 0,
   "items": [
-    { "title": "…", "url": "https://…", "date": "2026-11-05", "summary": "…", "venue": "…" }
+    { "id": "a1b2c3d4e5f60718", "title": "…", "url": "https://…", "date": "2026-11-05", "summary": "…", "venue": "…" }
   ]
 }
 ```
 
-`summary` and `venue` are optional. Maximum 10 items per file. Dates are ISO in JSON and formatted `5.11.2026` in the browser.
+`id` is the first 16 hex characters of the SHA-256 of the item URL without its `#fragment`. It is added by `build.mjs`, not by the source modules. `schema` is the file format version. `summary` and `venue` are optional. Maximum 10 items per file. Dates are ISO in JSON and formatted `5.11.2026` in the browser.
 
 Rules:
 
@@ -87,6 +90,10 @@ Rules:
 3. Last-good data: at the start of a run, `build.mjs` downloads the live site's own `data/<id>.json` (URL from an environment variable). A failed source keeps that file, sets `stale: true`, increments `failures`, and keeps `updated` at the last success time.
 4. First run, or no previous file: the failed source is written with an empty `items` array and `stale: true`. The card shows the fallback text.
 5. The browser loads each JSON file with `fetch(url, { cache: "no-store" })`.
+6. A previous file whose `schema` differs from the current one is treated as absent.
+7. `runBuild` accepts an optional `onNewItems(sourceId, items)` hook. It is called with the items whose id was not in the previous file. It is not called when there is no usable previous file (no baseline), and a failing hook never fails the build. Nothing uses the hook in v1.
+8. Each list item in the page carries `data-item-id`.
+9. v1 stores no personal data: no cookies, no `localStorage`, no analytics.
 
 ## 5. Source parsers
 
@@ -200,6 +207,8 @@ Checklist:
 | 20 | Scheduled run | Actions tab after 2 hours | at least 3 scheduled runs, intervals recorded |
 | 21 | Source terms | Read robots.txt of the three hosts and any terms page | usage stated as allowed, or flagged for the user |
 | 22 | Unofficial disclaimer | Read footer | present, Finnish, no city logo used |
+| 23 | Stable ids | Run `npm run build` twice, compare `id` per URL | identical ids for identical URLs, 16 hex characters, unique per file |
+| 24 | No personal data stored | Fresh browser profile, load page, read cookies and web storage | no cookies, empty `localStorage` and `sessionStorage` |
 
 Items 12, 19, 20 and 21 depend on live conditions or human judgment. If the auditor cannot check one, it reports NOT CHECKABLE and the user decides.
 

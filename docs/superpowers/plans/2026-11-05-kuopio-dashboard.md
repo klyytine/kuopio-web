@@ -25,6 +25,8 @@
 - Third-party GitHub Actions are pinned to a commit SHA. Workflow permissions: `contents: read`, `pages: write`, `id-token: write`.
 - Social profile URLs: Facebook `https://www.facebook.com/kuopionkaupunki/`, Instagram `https://www.instagram.com/kuopionkaupunki/`, LinkedIn `https://fi.linkedin.com/company/city-of-kuopio`.
 - No dashes (em or en) and no emojis in any file you write, including comments and Finnish copy. Use commas, periods or parentheses.
+- v1 stores no personal data: no cookies, no `localStorage`, no `sessionStorage`, no analytics. Accounts, search, email notifications, history and favorites are NOT built. Only the seams listed in "Future upgrades" at the end of this plan are built, so those features can be added later. Do not implement any of the features.
+- Every data file has `"schema": 1`. Every stored item has an `id` (see `itemId` in Task 2).
 - Every commit message ends with these two lines, after a blank line:
   ```
   Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
@@ -154,11 +156,15 @@ Expected: JSON describing the Pages site, or an error. If the error says Pages i
   - `truncate(text: string, max: number): string`
   - `toIsoDate(value: string|Date|undefined): string|null` (date in Europe/Helsinki, `YYYY-MM-DD`)
   - `parseFiDate(text: string): string|null` (first `dd.mm.yyyy` in text, as `YYYY-MM-DD`)
+  - `itemId(url: string): string` (first 16 hex characters of the SHA-256 of the URL without its `#fragment`; throws on an invalid URL)
+  - `isUsablePrevious(prev: unknown, id: string): boolean` (true only for an object with `schema === 1`, the same `id`, and an `items` array)
+  - `SCHEMA = 1` (exported from `merge.mjs`)
   - `ALLOWED_HOSTS: Set<string>`
   - `validateItems(items: unknown): { ok: boolean, reason?: string }`
-  - `mergeResult({ source: {id,title,sourceUrl}, prev: object|null, items?: Item[], error?: Error, now: Date }): SourceFile`
-  - `Item = { title: string, url: string, date: string|null, summary?: string, venue?: string }`
-  - `SourceFile = { id, title, sourceUrl, updated: string|null, stale: boolean, failures: number, items: Item[] }`
+  - `mergeResult({ source: {id,title,sourceUrl}, prev: object|null, items?: StoredItem[], error?: Error, now: Date }): SourceFile`
+  - `Item = { title: string, url: string, date: string|null, summary?: string, venue?: string }` (what source modules return)
+  - `StoredItem = Item & { id: string }` (added by `build.mjs`)
+  - `SourceFile = { schema: 1, id, title, sourceUrl, updated: string|null, stale: boolean, failures: number, items: StoredItem[] }`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -166,7 +172,7 @@ Expected: JSON describing the Pages site, or an error. If the error says Pages i
 ```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stripHtml, truncate, toIsoDate, parseFiDate } from '../scripts/lib/normalize.mjs';
+import { stripHtml, truncate, toIsoDate, parseFiDate, itemId } from '../scripts/lib/normalize.mjs';
 
 test('stripHtml removes tags and decodes entities', () => {
   assert.equal(stripHtml('<p>Kahvi &amp; <b>pulla</b></p>'), 'Kahvi & pulla');
@@ -193,6 +199,19 @@ test('parseFiDate reads the first date', () => {
   assert.equal(parseFiDate('05.11.2026 - 14.12.2026'), '2026-11-05');
   assert.equal(parseFiDate('5.1.2026'), '2026-01-05');
   assert.equal(parseFiDate('ei päivää'), null);
+});
+test('itemId is stable and 16 hex characters', () => {
+  const id = itemId('https://www.kuopio.fi/a?x=1');
+  assert.match(id, /^[0-9a-f]{16}$/);
+  assert.equal(itemId('https://www.kuopio.fi/a?x=1'), id);
+});
+test('itemId differs per url and ignores the fragment', () => {
+  assert.notEqual(itemId('https://www.kuopio.fi/a'), itemId('https://www.kuopio.fi/b'));
+  assert.notEqual(itemId('https://x.test/p?id=1'), itemId('https://x.test/p?id=2'));
+  assert.equal(itemId('https://www.kuopio.fi/a#osa'), itemId('https://www.kuopio.fi/a'));
+});
+test('itemId throws on an invalid url', () => {
+  assert.throws(() => itemId('not a url'));
 });
 ```
 
@@ -228,17 +247,18 @@ test('accepts cloudos host', () => {
 ```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeResult } from '../scripts/lib/merge.mjs';
+import { mergeResult, isUsablePrevious } from '../scripts/lib/merge.mjs';
 
 const source = { id: 'news', title: 'Uutiset', sourceUrl: 'https://www.kuopio.fi/uutisarkisto/' };
 const now = new Date('2026-11-05T12:00:00Z');
 const items = [{ title: 'A', url: 'https://www.kuopio.fi/a', date: '2026-11-05' }];
-const prev = { id: 'news', title: 'Uutiset', sourceUrl: source.sourceUrl, updated: '2026-11-05T10:00:00.000Z', stale: false, failures: 0, items };
+const prev = { schema: 1, id: 'news', title: 'Uutiset', sourceUrl: source.sourceUrl, updated: '2026-11-05T10:00:00.000Z', stale: false, failures: 0, items };
 
 test('success resets stale and failures', () => {
   const out = mergeResult({ source, prev: { ...prev, failures: 2, stale: true }, items, now });
   assert.equal(out.stale, false);
   assert.equal(out.failures, 0);
+  assert.equal(out.schema, 1);
   assert.equal(out.updated, now.toISOString());
   assert.deepEqual(out.items, items);
 });
@@ -253,6 +273,16 @@ test('failure increments existing failures', () => {
   const out = mergeResult({ source, prev: { ...prev, failures: 2, stale: true }, error: new Error('x'), now });
   assert.equal(out.failures, 3);
 });
+test('output carries the schema version', () => {
+  assert.equal(mergeResult({ source, prev: null, error: new Error('x'), now }).schema, 1);
+});
+test('isUsablePrevious checks id, items and schema', () => {
+  assert.equal(isUsablePrevious(prev, 'news'), true);
+  assert.equal(isUsablePrevious(prev, 'other'), false);
+  assert.equal(isUsablePrevious({ ...prev, schema: 2 }, 'news'), false);
+  assert.equal(isUsablePrevious(null, 'news'), false);
+  assert.equal(isUsablePrevious('text', 'news'), false);
+});
 test('failure without previous gives empty stale file', () => {
   const out = mergeResult({ source, prev: null, error: new Error('x'), now });
   assert.deepEqual(out.items, []);
@@ -261,7 +291,7 @@ test('failure without previous gives empty stale file', () => {
   assert.equal(out.updated, null);
 });
 test('corrupt previous is treated as absent', () => {
-  for (const bad of [{ id: 'other', items: [] }, { id: 'news', items: 'x' }, 'text', 42]) {
+  for (const bad of [{ id: 'other', items: [] }, { id: 'news', items: 'x' }, { ...prev, schema: 2 }, { ...prev, schema: undefined }, 'text', 42, null]) {
     const out = mergeResult({ source, prev: bad, error: new Error('x'), now });
     assert.deepEqual(out.items, []);
     assert.equal(out.failures, 1);
@@ -328,6 +358,7 @@ Expected: FAIL with `ERR_MODULE_NOT_FOUND` for the four lib modules.
 
 `scripts/lib/normalize.mjs`:
 ```js
+import { createHash } from 'node:crypto';
 import { load } from 'cheerio';
 
 export function stripHtml(html) {
@@ -360,6 +391,12 @@ export function parseFiDate(text) {
   if (!m) return null;
   const [, d, mo, y] = m;
   return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
+export function itemId(url) {
+  const u = new URL(url);
+  u.hash = '';
+  return createHash('sha256').update(u.href).digest('hex').slice(0, 16);
 }
 ```
 
@@ -394,16 +431,18 @@ export function validateItems(items) {
 
 `scripts/lib/merge.mjs`:
 ```js
-function usable(prev, id) {
-  return prev && typeof prev === 'object' && prev.id === id && Array.isArray(prev.items);
+export const SCHEMA = 1;
+
+export function isUsablePrevious(prev, id) {
+  return Boolean(prev) && typeof prev === 'object' && prev.schema === SCHEMA && prev.id === id && Array.isArray(prev.items);
 }
 
 export function mergeResult({ source, prev, items, error, now }) {
-  const base = { id: source.id, title: source.title, sourceUrl: source.sourceUrl };
+  const base = { schema: SCHEMA, id: source.id, title: source.title, sourceUrl: source.sourceUrl };
   if (!error) {
     return { ...base, updated: now.toISOString(), stale: false, failures: 0, items };
   }
-  if (usable(prev, source.id)) {
+  if (isUsablePrevious(prev, source.id)) {
     return {
       ...base,
       updated: prev.updated ?? null,
@@ -914,7 +953,7 @@ test('validation failure keeps previous local file', async () => {
 });
 test('uses previous data from the live site when a base url is given', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'kb-'));
-  const prev = { id: 'a', title: 'a', sourceUrl: 'https://www.kuopio.fi/', updated: '2026-11-05T09:00:00.000Z', stale: false, failures: 2, items: [item] };
+  const prev = { schema: 1, id: 'a', title: 'a', sourceUrl: 'https://www.kuopio.fi/', updated: '2026-11-05T09:00:00.000Z', stale: false, failures: 2, items: [item] };
   let requested;
   const fetchImpl = async (url) => { requested = url; return new Response(JSON.stringify(prev)); };
   const results = await runBuild({
@@ -941,6 +980,52 @@ test('corrupt local previous file is ignored', async () => {
   assert.deepEqual(results[0].items, []);
   assert.equal(results[0].failures, 1);
 });
+test('items get a stable id and the file carries the schema version', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kb-'));
+  const first = await runBuild({ sources: [mk('a', async () => [item])], outDir: dir, now });
+  const second = await runBuild({ sources: [mk('a', async () => [item])], outDir: dir, now });
+  assert.match(first[0].items[0].id, /^[0-9a-f]{16}$/);
+  assert.equal(first[0].items[0].id, second[0].items[0].id);
+  assert.equal(first[0].schema, 1);
+  assert.equal((await read(dir, 'a')).schema, 1);
+});
+test('onNewItems is not called on the first run (no baseline)', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kb-'));
+  const calls = [];
+  await runBuild({
+    sources: [mk('a', async () => [item])], outDir: dir, now,
+    onNewItems: async (id, fresh) => { calls.push([id, fresh]); },
+  });
+  assert.deepEqual(calls, []);
+});
+test('onNewItems receives only items not seen in the previous file', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kb-'));
+  const other = { title: 'B', url: 'https://www.kuopio.fi/b', date: '2026-11-06' };
+  const calls = [];
+  const onNewItems = async (id, fresh) => { calls.push([id, fresh.map((i) => i.title)]); };
+  await runBuild({ sources: [mk('a', async () => [item])], outDir: dir, now, onNewItems });
+  await runBuild({ sources: [mk('a', async () => [other, item])], outDir: dir, now, onNewItems });
+  assert.deepEqual(calls, [['a', ['B']]]);
+  await runBuild({ sources: [mk('a', async () => [other, item])], outDir: dir, now, onNewItems });
+  assert.equal(calls.length, 1);
+});
+test('onNewItems is not called when the source failed', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kb-'));
+  const calls = [];
+  const onNewItems = async (id, fresh) => { calls.push(id); };
+  await runBuild({ sources: [mk('a', async () => [item])], outDir: dir, now, onNewItems });
+  await runBuild({ sources: [mk('a', async () => { throw new Error('x'); })], outDir: dir, now, onNewItems });
+  assert.deepEqual(calls, []);
+});
+test('a failing onNewItems hook does not break the build', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'kb-'));
+  const other = { title: 'B', url: 'https://www.kuopio.fi/b', date: '2026-11-06' };
+  const onNewItems = async () => { throw new Error('hook broke'); };
+  await runBuild({ sources: [mk('a', async () => [item])], outDir: dir, now, onNewItems });
+  const results = await runBuild({ sources: [mk('a', async () => [other, item])], outDir: dir, now, onNewItems });
+  assert.equal(results[0].stale, false);
+  assert.equal((await read(dir, 'a')).items.length, 2);
+});
 ```
 
 Note on the 404 test: `fetchWithRetry` is called with `retries: 0` inside the build, so the test does not wait on the 5 s pause.
@@ -958,7 +1043,17 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fetchWithRetry } from './lib/http.mjs';
 import { validateItems } from './lib/validate.mjs';
-import { mergeResult } from './lib/merge.mjs';
+import { mergeResult, isUsablePrevious } from './lib/merge.mjs';
+import { itemId } from './lib/normalize.mjs';
+
+function knownId(item) {
+  if (typeof item?.id === 'string') return item.id;
+  try {
+    return itemId(item.url);
+  } catch {
+    return null;
+  }
+}
 
 async function loadPrevious(id, outDir, previousBaseUrl, fetchImpl) {
   if (previousBaseUrl) {
@@ -977,7 +1072,10 @@ async function loadPrevious(id, outDir, previousBaseUrl, fetchImpl) {
   }
 }
 
-export async function runBuild({ sources, outDir, previousBaseUrl, fetchImpl = globalThis.fetch, now = new Date() }) {
+// onNewItems(sourceId, items) is an extension point. It is called with items whose id was not in
+// the previous file. It is not called without a usable previous file (no baseline) or when the
+// source failed. A failing hook is logged and never fails the build. Nothing uses it in v1.
+export async function runBuild({ sources, outDir, previousBaseUrl, fetchImpl = globalThis.fetch, now = new Date(), onNewItems }) {
   await mkdir(outDir, { recursive: true });
   const results = [];
   for (const source of sources) {
@@ -988,6 +1086,7 @@ export async function runBuild({ sources, outDir, previousBaseUrl, fetchImpl = g
       items = await source.fetchItems({ fetchImpl });
       const check = validateItems(items);
       if (!check.ok) throw new Error(`validation failed: ${check.reason}`);
+      items = items.map((item) => ({ id: itemId(item.url), ...item }));
     } catch (err) {
       error = err;
       console.error(`[${source.id}] ${err.message}`);
@@ -995,6 +1094,17 @@ export async function runBuild({ sources, outDir, previousBaseUrl, fetchImpl = g
     const merged = mergeResult({ source, prev, items: error ? undefined : items, error, now });
     await writeFile(join(outDir, `${source.id}.json`), JSON.stringify(merged, null, 2) + '\n');
     results.push(merged);
+    if (!error && onNewItems && isUsablePrevious(prev, source.id)) {
+      const known = new Set(prev.items.map(knownId));
+      const fresh = merged.items.filter((item) => !known.has(item.id));
+      if (fresh.length > 0) {
+        try {
+          await onNewItems(source.id, fresh);
+        } catch (err) {
+          console.error(`[${source.id}] onNewItems failed: ${err.message}`);
+        }
+      }
+    }
   }
   return results;
 }
@@ -1058,6 +1168,7 @@ Claude-Session: https://claude.ai/code/session_01Dp86c5px88KTBjJk7LFMrt"
   - Grid `#cards` (class `columns is-multiline`) with one `.column` per source, then `#social-column`.
   - Per list card: `section.card` containing `h2.card-header-title`, `a.source-link`, `ul.item-list > li.item`, optional `button.expand` (`aria-expanded`, `aria-controls`), optional `p.notice-stale` (`role="status"`), optional `p.notice-empty`, `p.updated`.
   - Items 6 and later carry the `hidden` attribute while collapsed.
+  - Every `li.item` carries `data-item-id` set to the item's `id` from the JSON (extension point for favorites and search; unused in v1).
   - Social card: `button#fb-load`, container `#fb-slot`, links `a.profile-link` for Instagram and LinkedIn.
 
 - [ ] **Step 1: Vendor Bulma**
@@ -1253,7 +1364,7 @@ function formatStamp(iso) {
 function itemNode(item) {
   const link = el('a', { text: item.title, attrs: { href: item.url, rel: 'noopener' } });
   const meta = [item.date ? formatDate(item.date) : '', item.venue ?? ''].filter(Boolean).join(' \u00b7 ');
-  const li = el('li', { cls: 'item' }, [link]);
+  const li = el('li', { cls: 'item', attrs: item.id ? { 'data-item-id': String(item.id) } : {} }, [link]);
   if (meta) li.append(el('span', { cls: 'meta', text: meta }));
   return li;
 }
@@ -1417,9 +1528,9 @@ Run this script to generate the three files (no hand-typed JSON):
 mkdir -p test/e2e/data
 node -e "
 const fs = require('fs');
-const mk = (id, title, sourceUrl, items, extra = {}) => ({ id, title, sourceUrl, updated: '2026-11-05T12:30:00.000Z', stale: false, failures: 0, items, ...extra });
+const mk = (id, title, sourceUrl, items, extra = {}) => ({ schema: 1, id, title, sourceUrl, updated: '2026-11-05T12:30:00.000Z', stale: false, failures: 0, items, ...extra });
 const items = (n, prefix, extra = () => ({})) => Array.from({ length: n }, (_, i) => ({
-  title: prefix + ' ' + (i + 1), url: 'https://www.kuopio.fi/' + prefix.toLowerCase() + '/' + (i + 1), date: '2026-11-0' + (9 - Math.min(i, 8)), ...extra(i),
+  id: prefix.toLowerCase() + '-' + (i + 1), title: prefix + ' ' + (i + 1), url: 'https://www.kuopio.fi/' + prefix.toLowerCase() + '/' + (i + 1), date: '2026-11-0' + (9 - Math.min(i, 8)), ...extra(i),
 }));
 const notices = items(10, 'Ilmoitus');
 notices[0].title = '<img src=x onerror=\"window.__xss=1\">Vaarallinen otsikko';
@@ -1622,6 +1733,22 @@ test('expand button works from the keyboard', async () => {
   await card.locator('button.expand').focus();
   await page.keyboard.press('Enter');
   assert.equal(await card.locator('li.item:visible').count(), 10);
+  await context.close();
+});
+
+test('list items carry their stable id', async () => {
+  const { context, page } = await openPage();
+  const ids = await page.locator('li.item').evaluateAll((lis) => lis.map((li) => li.dataset.itemId));
+  assert.equal(ids.length, 23);
+  assert.ok(ids.every(Boolean));
+  assert.equal(new Set(ids).size, ids.length);
+  await context.close();
+});
+
+test('stores no personal data in the browser', async () => {
+  const { context, page } = await openPage();
+  assert.deepEqual(await context.cookies(), []);
+  assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
   await context.close();
 });
 
@@ -1865,7 +1992,7 @@ Expected: every line PASS, exit 0. Then test the failure path once: `mkdir /tmp/
 
 - [ ] **Step 3: Write `docs/audit/README.md`**
 
-Copy section 11 of the spec (rules, prompt, 22-item checklist) into this file as it stands in the spec, then add this header at the top:
+Copy section 11 of the spec (rules, prompt, 24-item checklist) into this file as it stands in the spec, then add this header at the top:
 
 ```markdown
 # Audit by a fresh Claude
@@ -1882,7 +2009,7 @@ Verify the copy is complete:
 ```bash
 grep -c '^| [0-9]' docs/audit/README.md
 ```
-Expected: `22`.
+Expected: `24`.
 
 - [ ] **Step 4: Commit and push**
 
@@ -1899,3 +2026,60 @@ Expected: push succeeds and the workflow runs green again.
 - [ ] **Step 5: Hand over**
 
 Report to the user: the Pages URL, the run result, the screenshots checked, what could not be verified (Facebook embed in a real logged-in browser, the 2-hour schedule check, source terms), and the exact line to start the audit: open a new session on a fresh clone and give it `docs/audit/README.md`. Do not start the audit yourself. The audit must come from a session that did not write the code.
+
+---
+
+## Future upgrades (design only, not in scope)
+
+Status: none of the features below is built in v1. The tasks above build only the seams listed here, so the features can be added later without rewriting the pipeline. Do not implement any of them while executing this plan.
+
+Requested by the user on 2026-11-05: user accounts, search, notifications (email), history of past data, favorites.
+
+### Seams built in v1
+
+| # | Seam | Where | Used by |
+|---|---|---|---|
+| 1 | Stable item `id` (16 hex of SHA-256 of the URL without fragment), and `data-item-id` on each list item | Tasks 2, 6, 7 | favorites, search, history, notifications (dedupe) |
+| 2 | `schema: 1` in every data file. A previous file with another schema is ignored. | Tasks 2, 6 | any change to the data format |
+| 3 | `onNewItems(sourceId, items)` hook in `runBuild`: new items since the previous file, no call without a baseline | Task 6 | history, notifications |
+| 4 | `loadPrevious` is one function in `build.mjs` | Task 6 | history (read from a `data` branch or store instead of the live site) |
+| 5 | Source modules return plain items and know nothing about storage, users or delivery | Tasks 3 to 5 | new sources, any new consumer |
+| 6 | No personal data in v1 (no cookies, no web storage, no analytics), enforced by a browser test | Task 8 | keeps accounts and notifications a deliberate, reviewed step |
+
+### What the v1 design cannot do alone
+
+1. GitHub Pages serves files only. Accounts, synced favorites and email need something that runs code and stores data outside Pages.
+2. v1 keeps at most 10 items per source and no past data. Search that is worth having, favorites that outlive the list, and "new since your last visit" all depend on history.
+3. The CSP in `site/index.html` has `connect-src 'self'`. Any API call to another host needs a reviewed change there.
+
+### The five features
+
+| Feature | Backend needed | First step | Main cost or risk |
+|---|---|---|---|
+| History | No server. Git or a store. | Workflow writes `history/<source>/<yyyy-mm>.jsonl` to a `data` branch when `onNewItems` reports items. `loadPrevious` reads that branch. Needs `contents: write`. | Reverses the v1 rule that nothing is committed. Repo growth is unmeasured, measure after a month of v1 data. Archiving city content ties to the source terms check (audit item 21). |
+| Favorites | Not at first. Per device in `localStorage`. | Star button on each item. Store a map from item `id` to a snapshot (title, url, date). | A favorite must store its own snapshot, because the item leaves the 10 item list. Using `localStorage` ends the "no web storage" rule and needs a privacy line. The browser can clear it. Synced favorites need accounts. |
+| Search | No. Static is enough. | Build writes `search-index.json` from history. A client side search library does the matching (none evaluated yet). | Without history the index holds about 30 items and is not worth it. Index size grows with history, measure first. |
+| Email notifications | Yes. Subscriber list, sender, unsubscribe. | Option 1 (smallest): generate `feed.xml` at build from `onNewItems`. No personal data. Readers use their own tools. Option 2: a third-party newsletter service reads that feed. Option 3: own sender in the workflow with a provider API key in Actions secrets. | Email addresses are personal data. Double opt-in, unsubscribe link, deliverability, secrets. Option 3 needs a subscriber store, which Pages does not provide. |
+| Accounts | Yes. Identity provider, user store, API. | Only after a need the earlier steps cannot meet (sync across devices, per-user email settings). Choose between a hosted auth and database service and a small serverless API (neither evaluated). | Personal data, GDPR duties, breach handling, cost, CSP change, a second system to run. The largest step by far. |
+
+### Suggested order
+
+1. History. Everything else gets better with it, and it holds no personal data.
+2. Favorites on the device, with snapshots.
+3. Search over history.
+4. `feed.xml`, as the first notification channel.
+5. Email notifications, only if the feed is not enough.
+6. Accounts, only if sync or per-user settings are required.
+
+Steps 1 to 4 add no personal data on any server. Personal data first appears at step 5.
+
+### Decisions left for later
+
+1. Where a backend would run, in which region (EU data residency), and who pays.
+2. Legal basis, privacy notice, consent, retention and who is the data controller for the site. This plan makes no legal claims and needs advice before step 5.
+3. Whether storing an archive of the city's items is allowed by the sources' terms.
+4. Vendors and prices. Not researched. When a step is chosen, announce and run the research then.
+
+### Checks tied to this section
+
+Audit items 23 (stable ids) and 24 (no personal data stored) in the spec verify the seams exist and the v1 promise holds.
