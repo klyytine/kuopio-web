@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PREVIOUS_BASE_URL: https://klyytine.github.io/kuopio-web
+  PREVIOUS_BASE_URL: https://kallelyytinen.fi/kuopio-web
 
 jobs:
   deploy:
