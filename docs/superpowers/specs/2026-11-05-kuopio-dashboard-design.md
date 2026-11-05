@@ -203,11 +203,17 @@ Checklist:
 
 Items 12, 19, 20 and 21 depend on live conditions or human judgment. If the auditor cannot check one, it reports NOT CHECKABLE and the user decides.
 
-## 12. Decisions needed from the user before implementation
+## 12. Decisions (resolved 2026-11-05)
 
-1. The exact Facebook, Instagram and LinkedIn profile URLs for the City of Kuopio.
-2. A valid GitHub credential in the build environment, or the user creates the repo and gives push access. The `GH_TOKEN` in the design session reported invalid.
-3. Whether to keep the unofficial disclaimer wording.
+1. Profile URLs, given by the user:
+   - Facebook: `https://www.facebook.com/kuopionkaupunki/`
+   - Instagram: `https://www.instagram.com/kuopionkaupunki/`
+   - LinkedIn: `https://fi.linkedin.com/company/city-of-kuopio`
+
+   The user's links carried `?locale=fi_FI` and `?hl=en`. The spec drops the query strings. The Instagram `hl=en` would force an English interface. The Facebook Page plugin takes the page URL without the locale parameter and sets language through its own `locale` option (`fi_FI`).
+2. Repo: the user created the private repo `https://github.com/klyytine/kuopio-web`. The build session attaches it with push access. The repo is private, so GitHub Pages availability for private repos depends on the account plan. This is unchecked and is the first task of the plan.
+3. Unofficial disclaimer wording: accepted.
+4. Spec approved by the user on 2026-11-05.
 
 ## 13. Risks
 
