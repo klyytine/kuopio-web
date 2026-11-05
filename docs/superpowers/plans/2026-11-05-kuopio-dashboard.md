@@ -641,7 +641,7 @@ test('builds venue text and tolerates empty venue', () => {
 });
 test('decodes entities in titles', () => {
   const e = { title: 'Kahvi &#8211; ja pulla &amp; mehu', url: 'https://www.hellokuopio.fi/tapahtuma/b/', start_date: '2026-11-06 10:00:00', venue: [] };
-  assert.equal(parseEvents({ events: [e] })[0].title, 'Kahvi – ja pulla & mehu');
+  assert.equal(parseEvents({ events: [e] })[0].title, 'Kahvi \u2013 ja pulla & mehu');
 });
 test('missing events key gives no items', () => {
   assert.deepEqual(parseEvents({}), []);
@@ -655,7 +655,7 @@ test('fetchItems requests ten upcoming events', async () => {
 });
 ```
 
-Note: the en dash in the decode test is produced by the entity `&#8211;` in the input and compared with the escape `–`, so no literal dash character is written to the file.
+Note: the test input uses the entity `&#8211;` and compares with the JavaScript escape `\u2013`, so no dash character is written to the file.
 
 - [ ] **Step 2: Run it to verify it fails**
 
@@ -757,9 +757,9 @@ test('parses the fixture into valid items', () => {
 test('decodes ISO-8859-1 without mojibake', () => {
   const items = parseNotices(buffer);
   const all = items.map((i) => i.title + ' ' + (i.summary ?? '')).join(' ');
-  assert.ok(!all.includes('Ã'), 'found Ã, charset not decoded');
-  assert.ok(!all.includes('�'), 'found replacement character');
-  assert.ok(!all.includes('⁄'), 'fraction slash not replaced');
+  assert.ok(!all.includes('\u00c3'), 'found \u00c3, charset not decoded');
+  assert.ok(!all.includes('\ufffd'), 'found replacement character');
+  assert.ok(!all.includes('\u2044'), 'fraction slash not replaced');
 });
 test('is ordered newest first (display start date)', () => {
   const dates = parseNotices(buffer).map((i) => i.date);
@@ -811,7 +811,7 @@ const LIST_URL = 'https://kuopio.oncloudos.com/cgi/DREQUEST.PHP?alo=1&page=annou
 const BASE = 'https://kuopio.oncloudos.com/cgi/';
 
 function clean(text) {
-  return text.replace(/⁄/g, '/').replace(/\s+/g, ' ').trim();
+  return text.replace(/\u2044/g, '/').replace(/\s+/g, ' ').trim();
 }
 
 export function parseNotices(buffer) {
@@ -1252,7 +1252,7 @@ function formatStamp(iso) {
 
 function itemNode(item) {
   const link = el('a', { text: item.title, attrs: { href: item.url, rel: 'noopener' } });
-  const meta = [item.date ? formatDate(item.date) : '', item.venue ?? ''].filter(Boolean).join(' · ');
+  const meta = [item.date ? formatDate(item.date) : '', item.venue ?? ''].filter(Boolean).join(' \u00b7 ');
   const li = el('li', { cls: 'item' }, [link]);
   if (meta) li.append(el('span', { cls: 'meta', text: meta }));
   return li;
@@ -1533,7 +1533,7 @@ test('no button when 5 or fewer items', async () => {
 test('dates use Finnish format and events show the venue', async () => {
   const { context, page } = await openPage();
   const first = page.locator('section.card', { has: page.locator('#h-events') }).locator('li.item').first();
-  assert.match(await first.locator('.meta').textContent(), /^\d{1,2}\.\d{1,2}\.\d{4} · Kuopion tori$/);
+  assert.match(await first.locator('.meta').textContent(), /^\d{1,2}\.\d{1,2}\.\d{4} \u00b7 Kuopion tori$/);
   await context.close();
 });
 
@@ -1845,7 +1845,7 @@ for (const file of files) {
   check(`${file}: has items`, Array.isArray(data.items) && data.items.length > 0, `${data.items?.length ?? 0} items`);
   check(`${file}: at most 10 items`, data.items.length <= 10);
   check(`${file}: not stale`, data.stale === false, `failures=${data.failures}`);
-  check(`${file}: no mojibake`, !/[ÃÂ�⁄]/.test(raw));
+  check(`${file}: no mojibake`, !/[\u00c3\u00c2\ufffd\u2044]/.test(raw));
   const badHosts = data.items.filter((i) => {
     try { const u = new URL(i.url); return u.protocol !== 'https:' || !ALLOWED_HOSTS.has(u.hostname); } catch { return true; }
   });
