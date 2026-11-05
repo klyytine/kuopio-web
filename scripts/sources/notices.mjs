@@ -4,7 +4,7 @@ import { fetchWithRetry } from '../lib/http.mjs';
 import { parseFiDate } from '../lib/normalize.mjs';
 
 export const id = 'notices';
-export const title = 'Ilmoitustaulu';
+export const title = 'Kuulutukset';
 export const sourceUrl = 'https://www.kuopio.fi/kuopionkaupunki/paatoksenteko/ilmoitustaulu/';
 const LIST_URL = 'https://kuopio.oncloudos.com/cgi/DREQUEST.PHP?alo=1&page=announcement_search&tzo=-180';
 const BASE = 'https://kuopio.oncloudos.com/cgi/';

@@ -50,14 +50,14 @@ async function openPage({ width = 1280, colorScheme = 'light', routes = {} } = {
   await context.route(/facebook\.(com|net)/, (r) => r.abort());
   for (const [pattern, handler] of Object.entries(routes)) await page.route(new RegExp(pattern), handler);
   await page.goto(base);
-  await page.waitForSelector('.card');
+  await page.waitForSelector('#h-events'); // the list cards are rendered together after all data loads
   return { context, page, requests, errors };
 }
 
-test('shows four Finnish cards in order', async () => {
+test('shows six Finnish cards in order', async () => {
   const { context, page } = await openPage();
   const headings = await page.locator('h2').allTextContents();
-  assert.deepEqual(headings, ['Ilmoitustaulu', 'Uutiset', 'Tapahtumat', 'Sosiaalinen media']);
+  assert.deepEqual(headings, ['Kuulutukset', 'Uutiset', 'Tapahtumat', 'Facebook', 'Instagram', 'LinkedIn']);
   assert.equal(await page.getAttribute('html', 'lang'), 'fi');
   await context.close();
 });

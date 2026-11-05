@@ -1,5 +1,5 @@
 const SOURCES = [
-  { id: 'notices', title: 'Ilmoitustaulu', sourceUrl: 'https://www.kuopio.fi/kuopionkaupunki/paatoksenteko/ilmoitustaulu/' },
+  { id: 'notices', title: 'Kuulutukset', sourceUrl: 'https://www.kuopio.fi/kuopionkaupunki/paatoksenteko/ilmoitustaulu/' },
   { id: 'news', title: 'Uutiset', sourceUrl: 'https://www.kuopio.fi/uutisarkisto/' },
   { id: 'events', title: 'Tapahtumat', sourceUrl: 'https://www.hellokuopio.fi/tapahtumat/tapahtumakalenteri/' },
 ];
@@ -133,7 +133,7 @@ function wireFacebook() {
 
 async function main() {
   const grid = document.getElementById('cards');
-  const social = document.getElementById('social-column');
+  const social = document.getElementById('social-facebook');
   const results = await Promise.all(SOURCES.map(load));
   SOURCES.forEach((cfg, index) => grid.insertBefore(buildCard(cfg, results[index]), social));
   wireFacebook();

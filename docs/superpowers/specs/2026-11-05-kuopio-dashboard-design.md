@@ -10,7 +10,7 @@ A Finnish-language bulletin board of City of Kuopio information, hosted on GitHu
 
 Success criteria:
 
-1. The page opens at the GitHub Pages URL and shows four cards: Ilmoitustaulu, Uutiset, Tapahtumat, Sosiaalinen media.
+1. The page opens at the GitHub Pages URL and shows six cards in two rows of three: Kuulutukset, Uutiset, Tapahtumat, then Facebook, Instagram, LinkedIn (amended 2026-11-05 after the first demo; the card formerly named Ilmoitustaulu is now Kuulutukset).
 2. Each list card shows up to 5 items and expands to all available items, maximum 10. The button shows the real count.
 3. Each card has a link to the page its data comes from.
 4. Reloading the browser shows the latest deployed data. Data is refreshed on GitHub every 30 minutes.
@@ -105,11 +105,11 @@ Rules:
 
 ## 6. Frontend
 
-1. Layout: Bulma columns. Three per row on desktop, two on tablet, one on phone. Order: Ilmoitustaulu, Uutiset, Tapahtumat, Sosiaalinen media.
+1. Layout: Bulma columns. Three per row on desktop, two on tablet, one on phone. Order: Kuulutukset, Uutiset, Tapahtumat, Facebook, Instagram, LinkedIn. On desktop that is two rows of three; each social feed is its own card below the three list cards.
 2. List card: header with title and "Avaa lähde" link. Five items, each a link with date, and venue for events. Button "Näytä lisää (N)" toggles items 6 to N. N is the real count. If there are 5 or fewer items, no button. Button uses `aria-expanded`. State resets on reload. Footer shows "Päivitetty 5.11.2026 klo 14.30".
 3. Stale card: shows "Tiedot voivat olla vanhentuneita, viimeksi päivitetty …".
 4. Empty card: shows "Tietoja ei saatu haettua" with the source link.
-5. Social card, static:
+5. Social cards, static (one card each for Facebook, Instagram and LinkedIn):
    - Facebook: a button "Näytä Facebook-syöte". Only on click does the page load the Facebook Page plugin timeline as an iframe (no Facebook script) for the City of Kuopio page. No Facebook script loads before the click. The page URL is a configuration constant to be confirmed with the user.
    - Instagram and LinkedIn: link tiles to the profiles. Profile URLs are configuration constants to be confirmed with the user.
    - If the Facebook embed fails or is blocked, the tile shows a link to the page.
