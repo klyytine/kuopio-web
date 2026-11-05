@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src https://www.facebook.com; base-uri 'none'; form-action 'none'">
+  <title>Kuopion ilmoitustaulu</title>
+  <meta name="description" content="Epävirallinen kooste Kuopion kaupungin ilmoituksista, uutisista ja tapahtumista.">
+  <link rel="stylesheet" href="vendor/bulma.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container px-4">
+    <header class="site-header">
+      <h1>Kuopion ilmoitustaulu</h1>
+      <p>Ilmoitukset, uutiset ja tapahtumat yhdellä sivulla.</p>
+    </header>
+    <main id="main">
+      <noscript><p>Sivu tarvitsee JavaScriptin toimiakseen.</p></noscript>
+      <div id="cards" class="columns is-multiline">
+        <div id="social-column" class="column is-12-mobile is-6-tablet is-4-desktop">
+          <section class="card" aria-labelledby="h-social">
+            <header class="card-header">
+              <h2 id="h-social" class="card-header-title">Sosiaalinen media</h2>
+            </header>
+            <div class="card-content">
+              <div id="fb-slot">
+                <p>Facebook-syöte lataa sisältöä Facebookilta vasta, kun painat painiketta.</p>
+                <button id="fb-load" class="button" type="button">Näytä Facebook-syöte</button>
+                <p><a class="profile-link" href="https://www.facebook.com/kuopionkaupunki/" rel="noopener">Kuopion kaupunki Facebookissa</a></p>
+              </div>
+              <a class="profile-link" href="https://www.instagram.com/kuopionkaupunki/" rel="noopener">Kuopion kaupunki Instagramissa</a>
+              <a class="profile-link" href="https://fi.linkedin.com/company/city-of-kuopio" rel="noopener">City of Kuopio LinkedInissä</a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <footer class="site-footer">
+      <p>Epävirallinen palvelu. Tiedot haetaan Kuopion kaupungin julkisilta sivuilta.</p>
+      <p>Lähteet:
+        <a href="https://www.kuopio.fi/kuopionkaupunki/paatoksenteko/ilmoitustaulu/" rel="noopener">Ilmoitustaulu</a>,
+        <a href="https://www.kuopio.fi/uutisarkisto/" rel="noopener">Uutisarkisto</a>,
+        <a href="https://www.hellokuopio.fi/tapahtumat/tapahtumakalenteri/" rel="noopener">Tapahtumakalenteri</a>.
+      </p>
+    </footer>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
