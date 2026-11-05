@@ -1,0 +1,25 @@
+{
+  "name": "kuopio-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "test:e2e": "node --test --test-concurrency=1 test/e2e/*.spec.mjs",
+    "build": "node scripts/build.mjs",
+    "audit:data": "node scripts/audit-data.mjs"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "fast-xml-parser": "^5.12.0",
+    "iconv-lite": "^0.7.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "bulma": "^1.0.4",
+    "playwright": "^1.64.1"
+  }
+}
