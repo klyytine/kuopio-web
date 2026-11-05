@@ -9,7 +9,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --link: color-mix(in srgb, var(--primary) 55%, white);
+    --link: color-mix(in srgb, var(--primary) 40%, white);
     --bg: #14171a;
     --surface: #1d2126;
     --text: #e8eaed;

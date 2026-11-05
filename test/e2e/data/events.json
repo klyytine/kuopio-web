@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "id": "events",
+  "title": "Tapahtumat",
+  "sourceUrl": "https://www.hellokuopio.fi/tapahtumat/tapahtumakalenteri/",
+  "updated": "2026-11-05T12:30:00.000Z",
+  "stale": false,
+  "failures": 0,
+  "items": [
+    {
+      "id": "tapahtuma-1",
+      "title": "Tapahtuma 1",
+      "url": "https://www.hellokuopio.fi/tapahtuma/1/",
+      "date": "2026-11-09",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-2",
+      "title": "Tapahtuma 2",
+      "url": "https://www.hellokuopio.fi/tapahtuma/2/",
+      "date": "2026-11-08",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-3",
+      "title": "Tapahtuma 3",
+      "url": "https://www.hellokuopio.fi/tapahtuma/3/",
+      "date": "2026-11-07",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-4",
+      "title": "Tapahtuma 4",
+      "url": "https://www.hellokuopio.fi/tapahtuma/4/",
+      "date": "2026-11-06",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-5",
+      "title": "Tapahtuma 5",
+      "url": "https://www.hellokuopio.fi/tapahtuma/5/",
+      "date": "2026-11-05",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-6",
+      "title": "Tapahtuma 6",
+      "url": "https://www.hellokuopio.fi/tapahtuma/6/",
+      "date": "2026-11-04",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-7",
+      "title": "Tapahtuma 7",
+      "url": "https://www.hellokuopio.fi/tapahtuma/7/",
+      "date": "2026-11-03",
+      "venue": "Kuopion tori"
+    },
+    {
+      "id": "tapahtuma-8",
+      "title": "Tapahtuma 8",
+      "url": "https://www.hellokuopio.fi/tapahtuma/8/",
+      "date": "2026-11-02",
+      "venue": "Kuopion tori"
+    }
+  ]
+}

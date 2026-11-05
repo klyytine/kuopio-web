@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "id": "notices",
+  "title": "Ilmoitustaulu",
+  "sourceUrl": "https://www.kuopio.fi/kuopionkaupunki/paatoksenteko/ilmoitustaulu/",
+  "updated": "2026-11-05T12:30:00.000Z",
+  "stale": false,
+  "failures": 0,
+  "items": [
+    {
+      "id": "ilmoitus-1",
+      "title": "<img src=x onerror=\"window.__xss=1\">Vaarallinen otsikko",
+      "url": "https://www.kuopio.fi/ilmoitus/1",
+      "date": "2026-11-09"
+    },
+    {
+      "id": "ilmoitus-2",
+      "title": "Ilmoitus 2",
+      "url": "https://www.kuopio.fi/ilmoitus/2",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "ilmoitus-3",
+      "title": "Ilmoitus 3",
+      "url": "https://www.kuopio.fi/ilmoitus/3",
+      "date": "2026-11-07"
+    },
+    {
+      "id": "ilmoitus-4",
+      "title": "Ilmoitus 4",
+      "url": "https://www.kuopio.fi/ilmoitus/4",
+      "date": "2026-11-06"
+    },
+    {
+      "id": "ilmoitus-5",
+      "title": "Ilmoitus 5",
+      "url": "https://www.kuopio.fi/ilmoitus/5",
+      "date": "2026-11-05"
+    },
+    {
+      "id": "ilmoitus-6",
+      "title": "Ilmoitus 6",
+      "url": "https://www.kuopio.fi/ilmoitus/6",
+      "date": "2026-11-04"
+    },
+    {
+      "id": "ilmoitus-7",
+      "title": "Ilmoitus 7",
+      "url": "https://www.kuopio.fi/ilmoitus/7",
+      "date": "2026-11-03"
+    },
+    {
+      "id": "ilmoitus-8",
+      "title": "Ilmoitus 8",
+      "url": "https://www.kuopio.fi/ilmoitus/8",
+      "date": "2026-11-02"
+    },
+    {
+      "id": "ilmoitus-9",
+      "title": "Ilmoitus 9",
+      "url": "https://www.kuopio.fi/ilmoitus/9",
+      "date": "2026-11-01"
+    },
+    {
+      "id": "ilmoitus-10",
+      "title": "Ilmoitus 10",
+      "url": "https://www.kuopio.fi/ilmoitus/10",
+      "date": "2026-11-01"
+    }
+  ]
+}

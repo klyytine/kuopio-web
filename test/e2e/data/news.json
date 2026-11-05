@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "id": "news",
+  "title": "Uutiset",
+  "sourceUrl": "https://www.kuopio.fi/uutisarkisto/",
+  "updated": "2026-11-05T12:30:00.000Z",
+  "stale": false,
+  "failures": 0,
+  "items": [
+    {
+      "id": "uutinen-1",
+      "title": "Uutinen 1",
+      "url": "https://www.kuopio.fi/uutinen/1",
+      "date": "2026-11-09"
+    },
+    {
+      "id": "uutinen-2",
+      "title": "Uutinen 2",
+      "url": "https://www.kuopio.fi/uutinen/2",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "uutinen-3",
+      "title": "Uutinen 3",
+      "url": "https://www.kuopio.fi/uutinen/3",
+      "date": "2026-11-07"
+    },
+    {
+      "id": "uutinen-4",
+      "title": "Uutinen 4",
+      "url": "https://www.kuopio.fi/uutinen/4",
+      "date": "2026-11-06"
+    },
+    {
+      "id": "uutinen-5",
+      "title": "Uutinen 5",
+      "url": "https://www.kuopio.fi/uutinen/5",
+      "date": "2026-11-05"
+    }
+  ]
+}
