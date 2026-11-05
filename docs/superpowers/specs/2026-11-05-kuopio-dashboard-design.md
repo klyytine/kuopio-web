@@ -110,12 +110,12 @@ Rules:
 3. Stale card: shows "Tiedot voivat olla vanhentuneita, viimeksi päivitetty …".
 4. Empty card: shows "Tietoja ei saatu haettua" with the source link.
 5. Social card, static:
-   - Facebook: a button "Näytä Facebook-syöte". Only on click does the page load the Facebook Page plugin timeline for the City of Kuopio page. No Facebook script loads before the click. The page URL is a configuration constant to be confirmed with the user.
+   - Facebook: a button "Näytä Facebook-syöte". Only on click does the page load the Facebook Page plugin timeline as an iframe (no Facebook script) for the City of Kuopio page. No Facebook script loads before the click. The page URL is a configuration constant to be confirmed with the user.
    - Instagram and LinkedIn: link tiles to the profiles. Profile URLs are configuration constants to be confirmed with the user.
    - If the Facebook embed fails or is blocked, the tile shows a link to the page.
 6. Theme: Bulma plus a custom stylesheet of about 100 lines. Colors are CSS variables. Palette values come from the stylesheet at `https://www.kuopio.fi/app/themes/kuopio/assets/dist/main.css`, read at build time of the theme, not guessed. Light and dark mode through `prefers-color-scheme`. No city logo.
 7. Accessibility: visible focus, keyboard operation, contrast WCAG 2.2 AA, semantic headings.
-8. Safety: all source text is inserted with `textContent`. No `innerHTML` with source data. Content Security Policy meta tag restricting scripts to self, plus Facebook hosts after the click.
+8. Safety: all source text is inserted with `textContent`. No `innerHTML` with source data. Content Security Policy meta tag restricting scripts to self, and allowing `frame-src https://www.facebook.com`.
 9. Footer: "Epävirallinen palvelu. Tiedot haetaan Kuopion kaupungin julkisilta sivuilta." with links to the sources.
 
 ## 7. Error handling
